@@ -10,10 +10,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas    #the . represents the current folder that this file is in
 from .database import get_db, engine
 
-
 models.Base.metadata.create_all(bind=engine)
-
-
 
 #connecting to db
 while True:
@@ -35,21 +32,11 @@ class Post(BaseModel): #pydantic model
     published: bool = True   #optional field
     rating: Optional[int] = None          #optional field
 
-def find_post(id):
-    for p in my_posts:
-        if p["id"] == id:
-            return p
-
-def find_post_index(id):
-    for i, p in enumerate(my_posts):
-        if p['id'] == id:
-            return i
-
 # test route
-# @app.get("/sqlalchemy")
-# def test_posts(db: Session = Depends(get_db)):
-#     posts = db.query(models.Post).all()
-#     return {'data': posts}
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {'data': posts}
 
 @app.get("/")       # decorator w instance and endpt. 'get' request is http method. '/' is root path
 def root():   #or 'async def' keyword optional
@@ -64,7 +51,7 @@ def get_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)  
-def create_posts(post : schemas.Post, db: Session = Depends(get_db)): #Post is our pydantic model user defined data type, post is the var name
+def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db)): #Post is our pydantic model user defined data type, post is the var name
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
     # # the %s is to ensure that only strings (not commands) can be entered into db
     # new_post = cursor.fetchone()
@@ -72,7 +59,6 @@ def create_posts(post : schemas.Post, db: Session = Depends(get_db)): #Post is o
     #new_post= models.Post(title=post.title, content=post.content, published=post.published)
     new_post = models.Post(**post.model_dump()) # 5:14 in video
     db.add(new_post)
-    new_post.dict()
     db.commit()
     db.refresh(new_post) #retrieve into newpost var after committing it
     return {"data": new_post}
@@ -103,19 +89,19 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT) #dont return json for http204 in fastapi
 
 @app.put("/posts/{id}")
-def update_post(id: int, updated_post: schemas.Post, db: Session = Depends(get_db)):
-    cursor.execute("""UPDATE posts SET title=%s, content=%s, published=%s WHERE id=%s RETURNING *""", (post.title, post.content, post.published, str(id)))
-    post = cursor.fetchone()
-    conn.commit()
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
+    # cursor.execute("""UPDATE posts SET title=%s, content=%s, published=%s WHERE id=%s RETURNING *""", (post.title, post.content, post.published, str(id)))
+    # post = cursor.fetchone()
+    # conn.commit()
     # #print(id)   #WHERE IS THIS GETTING PRINTED. cant see in terminal
 #5.26 in video
-    # post_query = db.query(models.Post).filter(models.Post.id == id)
-    # if post_query.first() == None:
-    #     raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
-    # #new_post= models.Post(title=post.title, content=post.content, published=post.published)
-    # post_query.update(post, synchronize_session=False) ##CANT CONVERT TO DICT
-    # db.commit()
-    return {"data" : post}
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    if post_query.first() == None:
+        raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
+    #new_post= models.Post(title=post.title, content=post.content, published=post.published)
+    post_query.update(updated_post.model_dump(), synchronize_session=False) ##CANT CONVERT TO DICT
+    db.commit()
+    return {"data" : updated_post}
 
 '''
 notes
