@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models, schemas    #the . represents the current folder that this file is in
+from . import models, schemas, utils    #the . represents the current folder that this file is in
 from .database import get_db, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -26,12 +26,12 @@ while True:
 app = FastAPI()     # created instance of FastAPI
 
 @app.get("/")       # decorator w instance and endpt. 'get' request is http method. '/' is root path
-def root():   #or 'async def' keyword optional
+def root():         #or 'async def' keyword optional
     return {"message": "Hello World"}
 
-@app.get("/posts", response_model=List[schemas.Post])  #order of paths coded matters. will retrieve first matching path oprn
+@app.get("/posts", response_model=List[schemas.Post])   #order of paths coded matters. will retrieve first matching path oprn
 def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all() #.all sends the query
+    posts = db.query(models.Post).all()                 #.all sends the query
     return posts
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED, response_model= schemas.Post)  
@@ -42,10 +42,9 @@ def create_posts(post : schemas.PostCreate, db: Session = Depends(get_db)): #Pos
     db.refresh(new_post) #retrieve into newpost var after committing it
     return new_post
 
-#for urls use plural bec convntn
-@app.get("/posts/{id}", response_model= schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):   #fastapi extracts the id. converts to int
-    post = db.query(models.Post).filter(models.Post.id == id).first() #bec only one, we k
+@app.get("/posts/{id}", response_model= schemas.Post)                   #for urls use plural bec convntn
+def get_post(id: int, db: Session = Depends(get_db)):                   #fastapi extracts the id. converts to int
+    post = db.query(models.Post).filter(models.Post.id == id).first()   #bec only one, we k
     if not post:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
     return post
@@ -60,7 +59,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT) #dont return json for http204 in fastapi
 
-@app.put("/posts/{id}", response_model= schemas.Post) #response_model= schemas.Post NOT WORKING
+@app.put("/posts/{id}", response_model= schemas.Post)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
@@ -70,11 +69,32 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
     db.commit()
     return post
 
-'''
-notes
-sqlalchemy not part of fastapi
-to use it with postgres, need psycopg2
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)  
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
-schema/pydantic model Post to define expected parameters etc
-orm model/sqlachemy model Post has attributes reqd acc to table in db
-'''
+    #hashing pw
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+
+    new_user = models.User(**user.model_dump()) 
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.get("/users/{id}", status_code=status.HTTP_200_OK, response_model=schemas.UserOut) 
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+    if not user:
+        raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"User with id {id} not found.")
+    return user
+
+
+# '''
+# notes
+# sqlalchemy not part of fastapi
+# to use it with postgres, need psycopg2
+
+# schema/pydantic model Post to define expected parameters etc
+# orm model/sqlachemy model Post has attributes reqd acc to table in db
+# '''

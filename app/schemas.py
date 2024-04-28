@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime 
 
 class PostBase(BaseModel):      #defining expected input
@@ -15,3 +15,15 @@ class Post(PostBase):           #making response model
 
     class Config:
         orm_mode = True         #tell the Pydantic model to read the data even if it is not a dict, but an ORM model (or any other arbitrary object with attributes)
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
