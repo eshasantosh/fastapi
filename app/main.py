@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models, schemas, utils    #the . represents the current folder that this file is in
+from . import models            #the . represents the current folder that this file is in
 from .database import get_db, engine
 from .routers import post, user, auth
 
