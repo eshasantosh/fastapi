@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 from .database import Base
@@ -13,6 +14,9 @@ class Post(Base):
     published = Column(Boolean, server_default='TRUE', nullable=False)
     created_at= Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable = False) #same data type as fk  #fk use tablename not class name #cascade deletes children w parent
+
+    owner = relationship("User") #User referencing sqlalchemy class not tablename
+
 
 class User(Base):
     __tablename__ = "users"

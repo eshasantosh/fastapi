@@ -10,18 +10,6 @@ class PostBase(BaseModel):      #defining expected input
 class PostCreate(PostBase):     #inherits properties of postbase
     pass
 
-class Post(PostBase):           #making response model
-    id: int
-    created_at: datetime
-    owner_id: int
-
-    class Config:
-        orm_mode = True         #tell the Pydantic model to read the data even if it is not a dict, but an ORM model (or any other arbitrary object with attributes)
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -29,6 +17,19 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class Post(PostBase):           #making response model
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserOut #for the sql relationship. make sure that the userout model code is above this class because sequential execution
+
+    class Config:
+        orm_mode = True         #tell the Pydantic model to read the data even if it is not a dict, but an ORM model (or any other arbitrary object with attributes)
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
 
 class UserLogin(BaseModel):
     email: EmailStr
