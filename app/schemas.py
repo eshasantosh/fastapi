@@ -13,6 +13,7 @@ class PostCreate(PostBase):     #inherits properties of postbase
 class Post(PostBase):           #making response model
     id: int
     created_at: datetime
+    owner_id: int
 
     class Config:
         orm_mode = True         #tell the Pydantic model to read the data even if it is not a dict, but an ORM model (or any other arbitrary object with attributes)
