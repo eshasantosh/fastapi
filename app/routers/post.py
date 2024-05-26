@@ -10,9 +10,10 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.Post])   #order of paths coded matters. will retrieve first matching path oprn
-def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)): #data type of current_user doesnt matter here
-    posts = db.query(models.Post).all()                 #.all sends the query
+def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""): #data type of current_user doesnt matter here
+    #posts = db.query(models.Post).all()                 #.all sends the query
     #posts = db.query(models.Post).filter(models.Post.id == current_user.id).all()  #if you want to retrieve only the logged in users own posts
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model= schemas.Post)  
