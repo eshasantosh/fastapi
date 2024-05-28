@@ -1,4 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from typing_extensions import Annotated
+
+
 from datetime import datetime 
 from typing import Optional
 
@@ -41,3 +44,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
+
+class Vote(BaseModel):
+    post_id: int
+    dir: Annotated[int, Field(strict=True, le=1)]  #sets validation for less than or equal to one. changed from 9.38.15 ideally restrict to 1 and 0
